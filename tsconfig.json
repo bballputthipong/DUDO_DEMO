@@ -1,0 +1,10 @@
+{
+  "extends": "@wellness/typescript-config/base.json",
+  "files": [],
+  "references": [
+    { "path": "./backend" },
+    { "path": "./packages/ui" },
+    { "path": "./packages/types" },
+    { "path": "./packages/utils" }
+  ]
+}

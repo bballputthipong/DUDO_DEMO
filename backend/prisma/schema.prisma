@@ -1,0 +1,516 @@
+// prisma/schema.prisma
+// Source of truth — ห้ามแก้ schema โดยไม่มี migration
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────
+
+enum UserRole {
+  USER
+  PARTNER_STAFF
+  PARTNER_ADMIN
+  CORPORATE_HR
+  INTERNAL_ADMIN
+  SUPER_ADMIN
+}
+
+enum PartnerStatus {
+  PENDING_REVIEW
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum OfferType {
+  CLASS
+  DAY_PASS
+  COURT_RESERVATION
+  APPOINTMENT
+  COURSE
+  EVENT
+  WORKSHOP
+}
+
+enum OfferStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum SlotStatus {
+  AVAILABLE
+  FULL
+  CANCELLED
+  PAST
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  REFUNDED
+}
+
+enum TokenSource {
+  PERSONAL
+  CORPORATE
+  BONUS
+}
+
+enum WalletTxType {
+  CREDIT_PURCHASE
+  CREDIT_CORPORATE_ALLOCATION
+  CREDIT_BONUS
+  CREDIT_REFUND
+  CREDIT_ADMIN_ADJUSTMENT
+  DEBIT_BOOKING
+  DEBIT_ADMIN_ADJUSTMENT
+}
+
+enum EmployeeStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  INACTIVE
+  REMOVED
+}
+
+enum CampaignType {
+  TOKEN_DISCOUNT
+  BONUS_TOKEN
+  FIRST_TIME
+  CORPORATE_WELLNESS
+  OFF_PEAK
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+enum SettlementStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  DISPUTED
+}
+
+enum AdminActionType {
+  USER_SUSPEND
+  USER_UNSUSPEND
+  PARTNER_APPROVE
+  PARTNER_REJECT
+  PARTNER_SUSPEND
+  BOOKING_CANCEL
+  BOOKING_REFUND
+  TOKEN_ADJUST
+  DISPUTE_RESOLVE
+}
+
+// ─────────────────────────────────────────
+// CORE MODELS
+// ─────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  phone         String?   @unique
+  passwordHash  String?
+  name          String
+  avatarUrl     String?
+  role          UserRole  @default(USER)
+  isActive      Boolean   @default(true)
+  isVerified    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  profile         UserProfile?
+  wallet          Wallet?
+  bookings        Booking[]
+  reviews         Review[]
+  activityRecords ActivityRecord[]
+  employeeMembership EmployeeMembership?
+  adminActions    AdminAction[]   @relation("AdminUser")
+
+  @@map("users")
+}
+
+model UserProfile {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  preferredLocation   String?  // Bangkok area / lat,lng
+  preferredCategories String[] // ["yoga", "pilates", "boxing"]
+  wellnessGoals       String[]
+  shareActivityFeed   Boolean  @default(true)
+  shareStats          Boolean  @default(false)
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+// ─────────────────────────────────────────
+// WALLET & TOKENS
+// ─────────────────────────────────────────
+
+model Wallet {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  personalTokenBalance  Int      @default(0)
+  corporateTokenBalance Int      @default(0)
+  bonusTokenBalance     Int      @default(0)
+  updatedAt             DateTime @updatedAt
+
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  // Virtual: totalBalance = personal + corporate + bonus
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id          String       @id @default(cuid())
+  walletId    String
+  userId      String
+  bookingId   String?
+  companyId   String?
+  type        WalletTxType
+  source      TokenSource
+  amount      Int          // positive = credit, negative = debit
+  balanceBefore Int
+  balanceAfter  Int
+  description String
+  expiresAt   DateTime?
+  createdAt   DateTime     @default(now())
+
+  wallet  Wallet   @relation(fields: [walletId], references: [id])
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  @@index([userId])
+  @@index([bookingId])
+  @@index([companyId])
+  @@map("wallet_transactions")
+}
+
+// ─────────────────────────────────────────
+// PARTNER & OFFERS
+// ─────────────────────────────────────────
+
+model Partner {
+  id              String        @id @default(cuid())
+  businessName    String
+  businessType    String        // "yoga_studio", "gym", "spa", etc.
+  description     String?
+  address         String
+  latitude        Decimal?      @db.Decimal(10, 7)
+  longitude       Decimal?      @db.Decimal(10, 7)
+  district        String?       // Bangkok district
+  coverImageUrl   String?
+  logoUrl         String?
+  contactEmail    String
+  contactPhone    String
+  lineId          String?
+  settlementRate  Decimal       @default(0.85) @db.Decimal(4, 3) // 85% to partner
+  bankAccountName String?
+  bankAccountNo   String?
+  bankName        String?
+  status          PartnerStatus @default(PENDING_REVIEW)
+  approvedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  offers      Offer[]
+  bookings    Booking[]
+  reviews     Review[]
+  settlements SettlementReport[]
+
+  @@map("partners")
+}
+
+model Offer {
+  id                 String      @id @default(cuid())
+  partnerId          String
+  name               String
+  type               OfferType
+  category           String      // "yoga", "pilates", "boxing", "recovery"
+  description        String?
+  coverImageUrl      String?
+  tokenPrice         Int         // tokens required to book
+  durationMinutes    Int?
+  capacity           Int?        // per slot (null = unlimited)
+  cancellationHours  Int         @default(24) // hours before slot to cancel
+  isPublic           Boolean     @default(true)
+  status             OfferStatus @default(DRAFT)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  partner  Partner  @relation(fields: [partnerId], references: [id])
+  slots    Slot[]
+  bookings Booking[]
+
+  @@index([partnerId])
+  @@index([category])
+  @@index([status])
+  @@map("offers")
+}
+
+model Slot {
+  id               String     @id @default(cuid())
+  offerId          String
+  instructorName   String?
+  startTime        DateTime
+  endTime          DateTime
+  capacity         Int
+  availableCapacity Int
+  status           SlotStatus @default(AVAILABLE)
+  notes            String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  offer    Offer     @relation(fields: [offerId], references: [id])
+  bookings Booking[]
+
+  @@index([offerId])
+  @@index([startTime])
+  @@map("slots")
+}
+
+// ─────────────────────────────────────────
+// BOOKING
+// ─────────────────────────────────────────
+
+model Booking {
+  id             String        @id @default(cuid())
+  userId         String
+  partnerId      String
+  offerId        String
+  slotId         String
+  companyId      String?       // filled if booked with corporate token
+  tokenUsed      Int
+  tokenSource    TokenSource
+  status         BookingStatus @default(PENDING)
+  checkInCode    String        @unique @default(cuid())
+  checkedInAt    DateTime?
+  completedAt    DateTime?
+  cancelledAt    DateTime?
+  cancelReason   String?
+  noShowAt       DateTime?
+  refundedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user               User               @relation(fields: [userId], references: [id])
+  partner            Partner            @relation(fields: [partnerId], references: [id])
+  offer              Offer              @relation(fields: [offerId], references: [id])
+  slot               Slot               @relation(fields: [slotId], references: [id])
+  walletTransactions WalletTransaction[]
+  activityRecord     ActivityRecord?
+  review             Review?
+
+  @@index([userId])
+  @@index([partnerId])
+  @@index([status])
+  @@index([checkInCode])
+  @@map("bookings")
+}
+
+// ─────────────────────────────────────────
+// ACTIVITY RECORD (post-completion)
+// ─────────────────────────────────────────
+
+model ActivityRecord {
+  id             String   @id @default(cuid())
+  userId         String
+  bookingId      String   @unique
+  category       String
+  partnerId      String
+  offerId        String
+  completedAt    DateTime
+  durationMinutes Int?
+  estimatedCalories Int?
+  isPublic       Boolean  @default(true)
+  shareCaption   String?
+  createdAt      DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([userId])
+  @@index([completedAt])
+  @@map("activity_records")
+}
+
+// ─────────────────────────────────────────
+// REVIEW
+// ─────────────────────────────────────────
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  bookingId String   @unique
+  partnerId String
+  offerId   String
+  rating    Int      // 1–5
+  comment   String?
+  isPublic  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  booking Booking @relation(fields: [bookingId], references: [id])
+  partner Partner @relation(fields: [partnerId], references: [id])
+
+  @@index([partnerId])
+  @@map("reviews")
+}
+
+// ─────────────────────────────────────────
+// CORPORATE
+// ─────────────────────────────────────────
+
+model Company {
+  id           String   @id @default(cuid())
+  name         String
+  emailDomain  String   @unique // "acme.com"
+  logoUrl      String?
+  industry     String?
+  size         String?  // "1-50", "51-200", "201-1000", "1000+"
+  contactEmail String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  departments        Department[]
+  employeeMemberships EmployeeMembership[]
+  tokenAllocations   CorporateTokenAllocation[]
+
+  @@map("companies")
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  createdAt DateTime @default(now())
+
+  company             Company              @relation(fields: [companyId], references: [id])
+  employeeMemberships EmployeeMembership[]
+
+  @@unique([companyId, name])
+  @@map("departments")
+}
+
+model EmployeeMembership {
+  id                   String         @id @default(cuid())
+  userId               String         @unique
+  companyId            String
+  departmentId         String?
+  corporateEmail       String
+  isEmailVerified      Boolean        @default(false)
+  monthlyTokenAllowance Int           @default(0)
+  status               EmployeeStatus @default(PENDING_VERIFICATION)
+  joinedAt             DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id])
+  company    Company     @relation(fields: [companyId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
+
+  @@index([companyId])
+  @@map("employee_memberships")
+}
+
+model CorporateTokenAllocation {
+  id          String   @id @default(cuid())
+  companyId   String
+  month       String   // "2024-01"
+  totalTokens Int
+  usedTokens  Int      @default(0)
+  allocatedAt DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@unique([companyId, month])
+  @@map("corporate_token_allocations")
+}
+
+// ─────────────────────────────────────────
+// CAMPAIGN
+// ─────────────────────────────────────────
+
+model Campaign {
+  id           String         @id @default(cuid())
+  companyId    String?        // null = platform-wide
+  partnerId    String?
+  name         String
+  type         CampaignType
+  tokenDiscount Int?          // % discount
+  bonusToken   Int?           // bonus tokens on booking
+  targetCategory String?
+  startDate    DateTime
+  endDate      DateTime
+  status       CampaignStatus @default(DRAFT)
+  createdAt    DateTime       @default(now())
+
+  @@map("campaigns")
+}
+
+// ─────────────────────────────────────────
+// SETTLEMENT
+// ─────────────────────────────────────────
+
+model SettlementReport {
+  id               String           @id @default(cuid())
+  partnerId        String
+  periodStart      DateTime
+  periodEnd        DateTime
+  completedBookings Int
+  totalTokenValue  Int
+  settlementRate   Decimal          @db.Decimal(4, 3)
+  settlementAmount Decimal          @db.Decimal(12, 2) // THB
+  status           SettlementStatus @default(PENDING)
+  paidAt           DateTime?
+  notes            String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  partner Partner @relation(fields: [partnerId], references: [id])
+
+  @@map("settlement_reports")
+}
+
+// ─────────────────────────────────────────
+// ADMIN
+// ─────────────────────────────────────────
+
+model AdminAction {
+  id           String          @id @default(cuid())
+  adminUserId  String
+  type         AdminActionType
+  targetEntity String          // "user", "partner", "booking", etc.
+  targetId     String
+  description  String
+  metadata     Json?
+  createdAt    DateTime        @default(now())
+
+  adminUser User @relation("AdminUser", fields: [adminUserId], references: [id])
+
+  @@index([adminUserId])
+  @@index([targetEntity, targetId])
+  @@map("admin_actions")
+}

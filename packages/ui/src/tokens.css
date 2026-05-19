@@ -1,0 +1,196 @@
+@import url("https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&family=Bai+Jamjuree:wght@300;400;500;600;700&display=swap");
+
+:root {
+  /* Neutral */
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #f6f7f9;
+  --color-neutral-100: #eceef2;
+  --color-neutral-200: #dde1e9;
+  --color-neutral-300: #bfc6d2;
+  --color-neutral-400: #98a3b3;
+  --color-neutral-500: #6b7687;
+  --color-neutral-600: #4c5668;
+  --color-neutral-700: #353f52;
+  --color-neutral-800: #222b3d;
+  --color-neutral-900: #141b2b;
+
+  /* Navy */
+  --color-navy-950: #001429;
+  --color-navy-900: #002450;
+  --color-navy-800: #003368;
+  --color-navy-700: #004080;
+  --color-navy-600: #004b97;
+  --color-navy-500: #1760a8;
+  --color-navy-400: #3d7ec0;
+  --color-navy-300: #6ba3d8;
+  --color-navy-200: #a5c7e8;
+  --color-navy-100: #d0e5f5;
+  --color-navy-50: #e8f3fb;
+
+  /* Accent */
+  --color-accent-900: #5c2800;
+  --color-accent-800: #7a3800;
+  --color-accent-700: #9e4e00;
+  --color-accent-600: #c06200;
+  --color-accent-500: #d97400;
+  --color-accent-400: #e8930f;
+  --color-accent-300: #f0aa3a;
+  --color-accent-200: #f8cc80;
+  --color-accent-100: #fdeab0;
+  --color-accent-50: #fef6dc;
+
+  /* Semantic BG */
+  --bg-base: var(--color-neutral-0);
+  --bg-app: var(--color-neutral-50);
+  --bg-section: var(--color-neutral-100);
+  --bg-navy-subtle: var(--color-navy-50);
+  --bg-navy-muted: var(--color-navy-100);
+  --bg-accent-subtle: var(--color-accent-50);
+  --bg-accent-muted: var(--color-accent-100);
+  --bg-overlay: rgba(0, 20, 41, 0.5);
+  --bg-overlay-strong: rgba(0, 20, 41, 0.65);
+  --bg-frosted-white: rgba(255, 255, 255, 0.72);
+  --bg-frosted-dark: rgba(0, 36, 80, 0.58);
+  --color-transparent: transparent;
+
+  /* Text */
+  --text-primary: var(--color-neutral-900);
+  --text-heading: var(--color-navy-900);
+  --text-secondary: var(--color-neutral-500);
+  --text-tertiary: var(--color-neutral-400);
+  --text-disabled: var(--color-neutral-400);
+  --text-inverse: var(--color-neutral-0);
+  --text-brand: var(--color-navy-700);
+  --text-accent: var(--color-accent-700);
+
+  /* Actions */
+  --action-primary-bg: var(--color-navy-700);
+  --action-primary-bg-hover: var(--color-navy-600);
+  --action-primary-bg-active: var(--color-navy-500);
+  --action-primary-text: var(--color-neutral-0);
+  --action-secondary-bg: var(--color-neutral-0);
+  --action-secondary-text: var(--color-navy-700);
+  --action-accent-bg: var(--color-accent-400);
+  --action-accent-bg-hover: var(--color-accent-300);
+  --action-accent-text: var(--color-neutral-0);
+  --action-ghost-text: var(--color-navy-700);
+  --action-disabled-bg: var(--color-neutral-200);
+  --action-disabled-text: var(--color-neutral-400);
+  --action-success-bg: var(--color-accent-400);
+  --action-success-text: var(--color-neutral-0);
+
+  /* Borders */
+  --border-subtle: var(--color-neutral-200);
+  --border-default: var(--color-neutral-300);
+  --border-brand: var(--color-navy-700);
+  --border-accent: var(--color-accent-400);
+  --border-error: #c0392b;
+
+  /* Typography */
+  --font-family-base: "Figtree", "Bai Jamjuree", sans-serif;
+  --font-family-thai: "Bai Jamjuree", "Figtree", sans-serif;
+  --font-size-2xs: 10px;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-md: 17px;
+  --font-size-lg: 20px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 28px;
+  --font-size-3xl: 34px;
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-none: 1;
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.35;
+  --line-height-base: 1.55;
+  --line-height-loose: 1.7;
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.03em;
+  --letter-spacing-wider: 0.07em;
+  --letter-spacing-caps: 0.09em;
+
+  /* Spacing */
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Component dimensions */
+  --space-half: 2px;
+  --space-tag-y: 3px;
+  --space-btn-xs-y: 5px;
+  --space-btn-lg-y: 14px;
+  --border-width-thin: 1px;
+  --border-width-default: 1.5px;
+  --border-width-badge: 2px;
+  --focus-ring-width: 3px;
+  --button-focus-offset: 3px;
+  --tag-dot-size: 5px;
+  --notification-badge-size: 18px;
+  --notification-dot-size: 9px;
+  --card-v-media-size: 88px;
+  --card-hover-lift: -2px;
+  --toggle-width: 48px;
+  --toggle-height: 28px;
+  --toggle-padding: 3px;
+  --toggle-thumb-size: 22px;
+  --bottom-nav-item-min-width: 56px;
+  --bottom-nav-icon-size: 20px;
+  --fab-size: 52px;
+  --fab-bottom-offset: 88px;
+
+  /* Radius */
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-none: none;
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.07);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.09);
+  --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.11);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.13);
+  --shadow-inner: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-focus-navy: 0 0 0 3px rgba(0, 64, 128, 0.1);
+
+  /* Frosted */
+  --frosted-white-border: rgba(255, 255, 255, 0.44);
+  --frosted-dark-border: rgba(255, 255, 255, 0.1);
+  --frosted-pill-border: rgba(255, 255, 255, 0.4);
+  --rating-badge-bg: rgba(255, 255, 255, 0.92);
+  --card-dark-secondary-text: rgba(255, 255, 255, 0.6);
+  --text-inverse-muted: rgba(255, 255, 255, 0.75);
+  --text-inverse-soft: rgba(255, 255, 255, 0.85);
+
+  /* Motion */
+  --duration-instant: 70ms;
+  --duration-fast: 140ms;
+  --duration-base: 210ms;
+  --duration-slow: 340ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --blur-sm: 8px;
+  --blur-md: 16px;
+  --blur-lg: 20px;
+  --saturation-frosted-soft: 1.2;
+  --saturation-frosted: 1.3;
+  --saturation-frosted-strong: 1.4;
+}

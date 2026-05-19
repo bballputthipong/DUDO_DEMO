@@ -1,0 +1,30 @@
+{
+  "name": "wellness-platform",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "dev:partner": "pnpm --filter @wellness/partner-web dev",
+    "dev:corporate": "pnpm --filter @wellness/corporate-web dev",
+    "dev:admin": "pnpm --filter @wellness/admin-web dev",
+    "dev:backend": "pnpm --filter @wellness/backend dev",
+    "dev:infra": "docker compose up -d postgres redis",
+    "dev:all": "docker compose up -d postgres redis && turbo dev",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\""
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@wellness/eslint-config": "workspace:*",
+    "@wellness/typescript-config": "workspace:*",
+    "eslint": "^9.18.0",
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.3"
+  }
+}

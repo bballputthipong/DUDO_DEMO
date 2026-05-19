@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # ─────────────────────────────────────────────
+  # Infrastructure
+  # ─────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: wellness-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wellness
+      POSTGRES_PASSWORD: wellness_secret
+      POSTGRES_DB: wellness_platform
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U wellness']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: wellness-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────
+  # Backend API (NestJS)
+  # ─────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: wellness-backend
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://wellness:wellness_secret@postgres:5432/wellness_platform?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-jwt-secret-change-in-production
+      JWT_REFRESH_SECRET: dev-jwt-refresh-secret-change-in-production
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 30d
+      SETTLEMENT_RATE_THB: 50
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─────────────────────────────────────────────
+  # Frontend Apps (dev mode — use npm run dev locally)
+  # Listed for reference; run on host for HMR
+  # ─────────────────────────────────────────────
+  # partner-web:   http://localhost:3000
+  # corporate-web: http://localhost:3002
+  # admin-web:     http://localhost:3003
+
+volumes:
+  postgres_data:
+  redis_data:

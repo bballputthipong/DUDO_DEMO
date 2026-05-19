@@ -1,0 +1,215 @@
+import { type TextStyle, type ViewStyle } from "react-native";
+
+export const colors = {
+  neutral: {
+    0: "#FFFFFF",
+    50: "#F6F7F9",
+    100: "#ECEEF2",
+    200: "#DDE1E9",
+    300: "#BFC6D2",
+    400: "#98A3B3",
+    500: "#6B7687",
+    600: "#4C5668",
+    700: "#353F52",
+    800: "#222B3D",
+    900: "#141B2B",
+  },
+  navy: {
+    950: "#001429",
+    900: "#002450",
+    800: "#003368",
+    700: "#004080",
+    600: "#004B97",
+    500: "#1760A8",
+    400: "#3D7EC0",
+    300: "#6BA3D8",
+    200: "#A5C7E8",
+    100: "#D0E5F5",
+    50: "#E8F3FB",
+  },
+  accent: {
+    900: "#5C2800",
+    800: "#7A3800",
+    700: "#9E4E00",
+    600: "#C06200",
+    500: "#D97400",
+    400: "#E8930F",
+    300: "#F0AA3A",
+    200: "#F8CC80",
+    100: "#FDEAB0",
+    50: "#FEF6DC",
+  },
+} as const;
+
+export const semantic = {
+  bgBase: colors.neutral[0],
+  bgApp: colors.neutral[50],
+  bgSection: colors.neutral[100],
+  bgNavySubtle: colors.navy[50],
+  bgNavyMuted: colors.navy[100],
+  bgAccentSubtle: colors.accent[50],
+  bgAccentMuted: colors.accent[100],
+  textPrimary: colors.neutral[900],
+  textHeading: colors.navy[900],
+  textSecondary: colors.neutral[500],
+  textTertiary: colors.neutral[400],
+  textDisabled: colors.neutral[400],
+  textInverse: colors.neutral[0],
+  textBrand: colors.navy[700],
+  textAccent: colors.accent[700],
+  borderSubtle: colors.neutral[200],
+  borderDefault: colors.neutral[300],
+  borderBrand: colors.navy[700],
+  borderAccent: colors.accent[400],
+  borderError: "#C0392B",
+  overlay: "rgba(0,20,41,0.50)",
+  overlayStrong: "rgba(0,20,41,0.65)",
+  frostedWhite: "rgba(255,255,255,0.72)",
+  frostedDark: "rgba(0,36,80,0.58)",
+  frostedWhiteBorder: "rgba(255,255,255,0.44)",
+  liquidGlass: "rgba(255,255,255,0.84)",
+  liquidGlassBorder: "rgba(255,255,255,0.88)",
+  ratingBadgeBg: "rgba(255,255,255,0.92)",
+  whiteSoft: "rgba(255,255,255,0.85)",
+  whiteMuted: "rgba(255,255,255,0.75)",
+  transparent: "transparent",
+} as const;
+
+export const spacing = {
+  0: 0,
+  1: 4,
+  2: 8,
+  3: 12,
+  4: 16,
+  5: 20,
+  6: 24,
+  7: 28,
+  8: 32,
+  10: 40,
+  12: 48,
+  16: 64,
+} as const;
+
+export const radius = {
+  xs: 3,
+  sm: 6,
+  md: 10,
+  lg: 16,
+  xl: 22,
+  full: 9999,
+} as const;
+
+export const typography = {
+  fontFamily: {
+    base: "Figtree_400Regular",
+    medium: "Figtree_500Medium",
+    semibold: "Figtree_600SemiBold",
+    bold: "Figtree_700Bold",
+    thai: "BaiJamjuree_400Regular",
+    thaiMedium: "BaiJamjuree_500Medium",
+    thaiSemibold: "BaiJamjuree_600SemiBold",
+    thaiBold: "BaiJamjuree_700Bold",
+  },
+  size: {
+    micro: 10,
+    xs: 11,
+    sm: 13,
+    base: 15,
+    md: 17,
+    lg: 20,
+    xl: 24,
+    "2xl": 28,
+    "3xl": 34,
+  },
+  lineHeight: {
+    tight: 1.2,
+    snug: 1.35,
+    base: 1.55,
+    loose: 1.7,
+  },
+} as const;
+
+export const shadow = {
+  none: {},
+  xs: {
+    shadowColor: colors.neutral[900],
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
+  },
+  sm: {
+    shadowColor: colors.neutral[900],
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  md: {
+    shadowColor: colors.neutral[900],
+    shadowOpacity: 0.09,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  lg: {
+    shadowColor: colors.neutral[900],
+    shadowOpacity: 0.11,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+} satisfies Record<string, ViewStyle>;
+
+export const textStyles = {
+  display: {
+    color: semantic.textHeading,
+    fontFamily: typography.fontFamily.thaiBold,
+    fontSize: typography.size["3xl"],
+    lineHeight: typography.size["3xl"] * typography.lineHeight.tight,
+  },
+  h1: {
+    color: semantic.textHeading,
+    fontFamily: typography.fontFamily.thaiBold,
+    fontSize: typography.size["2xl"],
+    lineHeight: typography.size["2xl"] * typography.lineHeight.tight,
+  },
+  h2: {
+    color: semantic.textHeading,
+    fontFamily: typography.fontFamily.thaiSemibold,
+    fontSize: typography.size.xl,
+    lineHeight: typography.size.xl * typography.lineHeight.snug,
+  },
+  h3: {
+    color: semantic.textHeading,
+    fontFamily: typography.fontFamily.thaiBold,
+    fontSize: typography.size.lg,
+    lineHeight: typography.size.lg * typography.lineHeight.snug,
+  },
+  title: {
+    color: semantic.textHeading,
+    fontFamily: typography.fontFamily.thaiSemibold,
+    fontSize: typography.size.md,
+    lineHeight: typography.size.md * typography.lineHeight.snug,
+  },
+  body: {
+    color: semantic.textPrimary,
+    fontFamily: typography.fontFamily.thai,
+    fontSize: typography.size.base,
+    lineHeight: typography.size.base * typography.lineHeight.base,
+  },
+  meta: {
+    color: semantic.textSecondary,
+    fontFamily: typography.fontFamily.thai,
+    fontSize: typography.size.sm,
+    lineHeight: typography.size.sm * typography.lineHeight.base,
+  },
+  caption: {
+    color: semantic.textSecondary,
+    fontFamily: typography.fontFamily.thaiSemibold,
+    fontSize: typography.size.xs,
+    lineHeight: typography.size.xs * typography.lineHeight.snug,
+  },
+} satisfies Record<string, TextStyle>;
+
+export type TextVariant = keyof typeof textStyles;

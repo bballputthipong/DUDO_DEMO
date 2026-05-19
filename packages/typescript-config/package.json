@@ -1,0 +1,17 @@
+{
+  "name": "@wellness/typescript-config",
+  "version": "0.1.0",
+  "private": true,
+  "files": [
+    "base.json",
+    "next.json",
+    "node.json",
+    "react-native.json"
+  ],
+  "exports": {
+    "./base.json": "./base.json",
+    "./next.json": "./next.json",
+    "./node.json": "./node.json",
+    "./react-native.json": "./react-native.json"
+  }
+}
