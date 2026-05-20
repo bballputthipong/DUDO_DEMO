@@ -1,8 +1,8 @@
 import { Platform, type ViewStyle } from "react-native";
 
 export const mobileLayout = {
-  maxWidth: 430,
-  tabBarMaxWidth: 398,
+  maxWidth: 390,
+  tabBarMaxWidth: 366,
 } as const;
 
 export const webPhoneShell: ViewStyle =

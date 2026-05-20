@@ -8,8 +8,9 @@ import { colors, semantic, shadow, typography } from "@/src/theme/tokens";
 
 export default function TabsLayout() {
   const { width } = useWindowDimensions();
-  const tabBarWidth = Math.min(width - 32, mobileLayout.tabBarMaxWidth - 12);
-  const tabBarLeft = Math.max((width - tabBarWidth) / 2, 16);
+  const frameWidth = Platform.OS === "web" ? mobileLayout.maxWidth : width;
+  const tabBarWidth = Math.min(frameWidth - 32, mobileLayout.tabBarMaxWidth - 12);
+  const tabBarLeft = Math.max((frameWidth - tabBarWidth) / 2, 16);
 
   return (
     <Tabs
