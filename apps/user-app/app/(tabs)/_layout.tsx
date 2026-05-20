@@ -35,7 +35,7 @@ export default function TabsLayout() {
           paddingVertical: 2,
         },
         tabBarActiveBackgroundColor: semantic.transparent,
-        tabBarBackground: () => <BlurView intensity={58} tint="light" style={styles.liquidGlass} />,
+        tabBarBackground: () => <BlurView intensity={78} tint="light" style={styles.liquidGlass} />,
         tabBarStyle: {
           backgroundColor: semantic.liquidGlass,
           borderColor: semantic.liquidGlassBorder,
@@ -52,7 +52,7 @@ export default function TabsLayout() {
           position: "absolute",
           right: undefined,
           width: tabBarWidth,
-          ...(Platform.OS === "web" ? { backdropFilter: "blur(18px) saturate(1.35)" } : {}),
+          ...(Platform.OS === "web" ? { backdropFilter: "blur(24px) saturate(1.45)" } : {}),
           ...shadow.lg,
         },
       }}

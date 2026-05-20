@@ -1,5 +1,7 @@
 import { router } from "expo-router";
+import { BlurView } from "expo-blur";
 import {
+  ArrowRight,
   Bookmark,
   ChevronRight,
   Dumbbell,
@@ -9,14 +11,16 @@ import {
   LocateFixed,
   Moon,
   MousePointer2,
+  Plus,
   SlidersHorizontal,
   Star,
   Tag as TagIcon,
   UserPlus,
   UserRound,
+  X,
 } from "lucide-react-native";
-import { type ReactNode } from "react";
-import { ImageBackground, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { type ReactNode, useState } from "react";
+import { Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
@@ -299,10 +303,36 @@ const recommendedStudios = [
   },
 ];
 
+type RecommendedStudio = (typeof recommendedStudios)[number];
+
+type SelectedBooking = {
+  className: string;
+  distance: string;
+  location: string;
+  passName: string;
+  price: string;
+  studioTitle: string;
+  time: string;
+};
+
 export default function HomeScreen() {
   const user = useAuthStore((state) => state.user);
   const firstName = user?.name?.split(" ")[0] ?? "DUDO";
   const featured = activities.slice(0, 4);
+  const [selectedBooking, setSelectedBooking] = useState<SelectedBooking | null>(null);
+  const selectedSlotId = selectedBooking ? `${selectedBooking.studioTitle}-${selectedBooking.time}` : null;
+
+  const handleSelectTime = (studio: RecommendedStudio, time: string) => {
+    setSelectedBooking({
+      className: studio.className,
+      distance: studio.distance,
+      location: studio.location,
+      passName: studio.passName,
+      price: studio.price,
+      studioTitle: studio.title,
+      time,
+    });
+  };
 
   return (
     <SafeAreaView edges={["left", "right"]} style={[styles.root, webPhoneShell]}>
@@ -477,7 +507,7 @@ export default function HomeScreen() {
             {trendingStudios.map((studio, index) => (
               <Pressable key={studio.title} style={styles.studioCard} onPress={() => router.push(`/activity/${featured[index % featured.length]?.id ?? "act-yoga-flow"}`)}>
                 <ImageBackground imageStyle={styles.studioImage} source={{ uri: studio.image }} style={styles.studioMedia}>
-                  <View style={styles.mediaOverlay} />
+                  <ImageFadeOverlay />
                   <View style={styles.ratingBadge}>
                     <Star color={colors.accent[400]} fill={colors.accent[400]} size={12} />
                     <AppText style={styles.ratingText}>{studio.rating}</AppText>
@@ -516,6 +546,14 @@ export default function HomeScreen() {
         </Section>
 
         <Section title="DODO recommended">
+          <ScrollView contentContainerStyle={styles.dodoRecommendedRow} horizontal showsHorizontalScrollIndicator={false}>
+            {trendingStudios.slice(3).map((studio) => (
+              <DodoRecommendedCard key={studio.title} studio={studio} />
+            ))}
+          </ScrollView>
+        </Section>
+
+        <Section title="Recommended classes">
           <View style={styles.recommendedPanel}>
             <ScrollView contentContainerStyle={styles.filterRow} horizontal showsHorizontalScrollIndicator={false}>
               <Pressable style={styles.filterButton}>
@@ -530,13 +568,14 @@ export default function HomeScreen() {
             </ScrollView>
             <View style={styles.recommendedList}>
               {recommendedStudios.map((studio) => (
-                <RecommendedStudioCard key={studio.title} studio={studio} />
+                <RecommendedStudioCard key={studio.title} onSelectTime={handleSelectTime} selectedSlotId={selectedSlotId} studio={studio} />
               ))}
             </View>
           </View>
         </Section>
         </View>
       </ScrollView>
+      <ReserveSheet booking={selectedBooking} onClose={() => setSelectedBooking(null)} />
     </SafeAreaView>
   );
 }
@@ -632,6 +671,36 @@ function CompactTag({ label }: { label: string }) {
   );
 }
 
+function ImageFadeOverlay() {
+  return (
+    <Svg height="58%" style={styles.imageFadeOverlay} width="100%">
+      <Defs>
+        <LinearGradient id="imageFade" x1="0" x2="0" y1="0" y2="1">
+          <Stop offset="0" stopColor={colors.navy[950]} stopOpacity="0" />
+          <Stop offset="1" stopColor={colors.navy[950]} stopOpacity="0.68" />
+        </LinearGradient>
+      </Defs>
+      <Rect fill="url(#imageFade)" height="100%" width="100%" x="0" y="0" />
+    </Svg>
+  );
+}
+
+function DodoRecommendedCard({ studio }: { studio: (typeof trendingStudios)[number] }) {
+  return (
+    <Pressable style={styles.dodoRecommendedCard}>
+      <ImageBackground imageStyle={styles.dodoRecommendedImage} source={{ uri: studio.image }} style={styles.dodoRecommendedMedia}>
+        <View style={styles.ratingBadge}>
+          <Star color={colors.accent[400]} fill={colors.accent[400]} size={12} />
+          <AppText style={styles.ratingText}>{studio.rating}</AppText>
+        </View>
+      </ImageBackground>
+      <AppText muted numberOfLines={2} style={styles.dodoRecommendedTitle}>
+        {studio.title}
+      </AppText>
+    </Pressable>
+  );
+}
+
 function PromoCard({ action, image, subtitle, title }: { action: string; image: string; subtitle: string; title: string }) {
   return (
     <View style={styles.promoCard}>
@@ -693,19 +762,38 @@ function PlanCard({ tier }: { tier: (typeof planTiers)[number] }) {
   );
 }
 
-function RecommendedStudioCard({ studio }: { studio: (typeof recommendedStudios)[number] }) {
+function RecommendedStudioCard({
+  onSelectTime,
+  selectedSlotId,
+  studio,
+}: {
+  onSelectTime: (studio: RecommendedStudio, time: string) => void;
+  selectedSlotId: string | null;
+  studio: RecommendedStudio;
+}) {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const selectedTime = studio.times.find((time) => selectedSlotId === `${studio.title}-${time}`);
+  const hasSelectedTime = Boolean(selectedTime);
   return (
     <View style={styles.recommendationItem}>
       <View style={styles.recommendationTop}>
-        <ImageBackground imageStyle={styles.recommendationImage} source={{ uri: studio.image ?? "" }} style={styles.recommendationMedia}>
-          <Pressable style={styles.favoriteButton}>
-            <Heart color={colors.accent[400]} fill={colors.accent[400]} size={20} />
-          </Pressable>
-        </ImageBackground>
+        <View style={styles.recommendationMedia}>
+          <Image source={{ uri: studio.image ?? "" }} style={[StyleSheet.absoluteFillObject, styles.recommendationImage]} resizeMode="cover" />
+        </View>
         <View style={styles.recommendationCopy}>
-          <AppText numberOfLines={2} style={styles.recommendationTitle}>
-            {studio.title}
-          </AppText>
+          <View style={styles.titleRow}>
+            <AppText numberOfLines={2} style={styles.recommendationTitle}>
+              {studio.title}
+            </AppText>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: isFavorite }}
+              onPress={() => setIsFavorite((value) => !value)}
+              style={({ pressed }) => [styles.favoriteButton, isFavorite && styles.favoriteButtonActive, pressed && styles.pressed]}
+            >
+              <Heart color={isFavorite ? colors.accent[400] : colors.neutral[700]} fill={isFavorite ? colors.accent[400] : semantic.transparent} size={20} />
+            </Pressable>
+          </View>
           <View style={styles.recommendationRating}>
             <Star color={colors.accent[400]} fill={colors.accent[400]} size={18} />
             <AppText style={styles.recommendationMeta}>
@@ -723,32 +811,75 @@ function RecommendedStudioCard({ studio }: { studio: (typeof recommendedStudios)
         </View>
       </View>
       <View style={styles.classRows}>
-        <View style={styles.classRow}>
+        <View style={styles.classBlock}>
           <AppText numberOfLines={1} style={styles.className}>
             {studio.className}
           </AppText>
           <ScrollView contentContainerStyle={styles.timeRow} horizontal showsHorizontalScrollIndicator={false}>
             {studio.times.map((time) => (
-              <View key={time} style={styles.timePill}>
-                <AppText style={styles.timeText}>{time}</AppText>
-              </View>
+              <Pressable
+                key={time}
+                accessibilityRole="button"
+                accessibilityState={{ selected: selectedSlotId === `${studio.title}-${time}` }}
+                onPress={() => onSelectTime(studio, time)}
+                style={({ pressed }) => [styles.timePill, selectedSlotId === `${studio.title}-${time}` && styles.timePillSelected, pressed && styles.pressed]}
+              >
+                <AppText style={[styles.timeText, selectedSlotId === `${studio.title}-${time}` && styles.timeTextSelected]}>{time}</AppText>
+              </Pressable>
             ))}
           </ScrollView>
         </View>
-        <View style={styles.classRow}>
+        <View style={styles.classBlock}>
           <AppText numberOfLines={1} style={styles.className}>
             {studio.passName}
           </AppText>
           <View style={styles.passPill}>
-            <AppText style={styles.timeText}>Day Pass</AppText>
+            <AppText style={styles.timeText}>Single Class</AppText>
           </View>
         </View>
       </View>
-      <Pressable style={({ pressed }) => [styles.seeClassesButton, pressed && styles.pressed]}>
-        <AppText style={styles.seeClassesText}>{studio.action}</AppText>
-        <ChevronRight color={colors.navy[700]} size={24} />
+      <Pressable
+        onPress={selectedTime ? () => onSelectTime(studio, selectedTime) : undefined}
+        style={({ pressed }) => [styles.seeClassesButton, hasSelectedTime && styles.seeClassesButtonSelected, pressed && styles.pressed]}
+      >
+        <AppText style={[styles.seeClassesText, hasSelectedTime && styles.seeClassesTextSelected]}>{hasSelectedTime ? "Reserve" : studio.action}</AppText>
+        <ArrowRight color={hasSelectedTime ? semantic.textInverse : colors.navy[700]} size={24} />
       </Pressable>
     </View>
+  );
+}
+
+function ReserveSheet({ booking, onClose }: { booking: SelectedBooking | null; onClose: () => void }) {
+  return (
+    <Modal animationType="slide" transparent visible={Boolean(booking)} onRequestClose={onClose}>
+      <View style={styles.modalRoot}>
+        <BlurView intensity={36} tint="light" style={StyleSheet.absoluteFill} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Pressable accessibilityRole="button" onPress={onClose} style={styles.modalClose}>
+          <X color={semantic.textInverse} size={18} />
+        </Pressable>
+        <BlurView intensity={82} tint="light" style={styles.reserveSheet}>
+          <View style={styles.reserveHandle} />
+          <View style={styles.reserveCopy}>
+            <View style={styles.reservePriceRow}>
+              <AppText style={styles.reserveCredits}>4</AppText>
+              <AppText style={styles.reservePrice}>credits or $450</AppText>
+            </View>
+            <AppText muted style={styles.reserveMeta}>
+              1 class · 1:30 hr · Start at {booking?.time ?? "--:--"} · {booking?.location ?? ""}
+            </AppText>
+          </View>
+          <View style={styles.reserveActionRow}>
+            <Pressable style={({ pressed }) => [styles.reserveButton, pressed && styles.pressed]}>
+              <AppText style={styles.reserveButtonText}>Reserve</AppText>
+            </Pressable>
+            <Pressable style={({ pressed }) => [styles.reserveAddButton, pressed && styles.pressed]}>
+              <Plus color={semantic.textInverse} size={34} strokeWidth={2.4} />
+            </Pressable>
+          </View>
+        </BlurView>
+      </View>
+    </Modal>
   );
 }
 
@@ -1157,9 +1288,11 @@ const styles = StyleSheet.create({
   studioImage: {
     borderRadius: radius.lg,
   },
-  mediaOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: semantic.overlay,
+  imageFadeOverlay: {
+    bottom: 0,
+    left: 0,
+    position: "absolute",
+    right: 0,
   },
   ratingBadge: {
     alignItems: "center",
@@ -1223,6 +1356,29 @@ const styles = StyleSheet.create({
     color: colors.neutral[800],
     fontFamily: typography.fontFamily.medium,
     fontSize: typography.size.micro,
+  },
+  dodoRecommendedRow: {
+    gap: spacing[3],
+    paddingRight: spacing[4],
+  },
+  dodoRecommendedCard: {
+    width: 156,
+  },
+  dodoRecommendedMedia: {
+    borderRadius: radius.lg,
+    height: 118,
+    overflow: "hidden",
+    padding: spacing[2],
+  },
+  dodoRecommendedImage: {
+    borderRadius: radius.lg,
+  },
+  dodoRecommendedTitle: {
+    color: semantic.textPrimary,
+    fontFamily: typography.fontFamily.medium,
+    fontSize: typography.size.md,
+    lineHeight: typography.size.md * typography.lineHeight.snug,
+    marginTop: spacing[2],
   },
   promoCard: {
     width: 260,
@@ -1452,28 +1608,41 @@ const styles = StyleSheet.create({
     paddingBottom: spacing[4],
   },
   recommendationTop: {
+    alignItems: "flex-start",
     flexDirection: "row",
     gap: spacing[3],
   },
   recommendationMedia: {
     borderRadius: radius.lg,
-    height: 132,
+    flexShrink: 0,
+    height: 116,
+    minHeight: 116,
+    minWidth: 116,
     overflow: "hidden",
-    width: 132,
+    width: 116,
   },
   recommendationImage: {
     borderRadius: radius.lg,
   },
+  titleRow: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: spacing[2],
+    justifyContent: "space-between",
+  },
   favoriteButton: {
     alignItems: "center",
-    alignSelf: "flex-end",
-    backgroundColor: semantic.bgBase,
+    backgroundColor: semantic.frostedWhite,
     borderRadius: radius.full,
+    borderColor: semantic.frostedWhiteBorder,
+    borderWidth: 1,
     height: 36,
     justifyContent: "center",
-    margin: spacing[2],
     width: 36,
     ...shadow.xs,
+  },
+  favoriteButtonActive: {
+    backgroundColor: colors.neutral[200],
   },
   recommendationCopy: {
     flex: 1,
@@ -1481,6 +1650,7 @@ const styles = StyleSheet.create({
   },
   recommendationTitle: {
     color: semantic.textPrimary,
+    flex: 1,
     fontFamily: typography.fontFamily.bold,
     fontSize: typography.size.lg,
     lineHeight: typography.size.lg * typography.lineHeight.tight,
@@ -1506,40 +1676,48 @@ const styles = StyleSheet.create({
   classRows: {
     gap: spacing[2],
   },
-  classRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: spacing[2],
+  classBlock: {
+    gap: spacing[1],
   },
   className: {
     color: semantic.textPrimary,
     fontFamily: typography.fontFamily.bold,
     fontSize: typography.size.base,
-    width: 112,
   },
   timeRow: {
-    gap: spacing[1],
+    gap: spacing[2],
   },
   timePill: {
     alignItems: "center",
-    backgroundColor: colors.neutral[200],
-    borderRadius: radius.sm,
-    height: 28,
+    backgroundColor: semantic.bgBase,
+    borderColor: semantic.borderDefault,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    height: 36,
     justifyContent: "center",
-    width: 44,
+    minWidth: 56,
+    paddingHorizontal: spacing[2],
+  },
+  timePillSelected: {
+    backgroundColor: colors.navy[700],
+    borderColor: colors.navy[700],
   },
   passPill: {
     alignItems: "center",
+    alignSelf: "flex-start",
     backgroundColor: colors.neutral[200],
     borderRadius: radius.sm,
     height: 28,
     justifyContent: "center",
-    width: 76,
+    paddingHorizontal: spacing[3],
   },
   timeText: {
-    color: colors.neutral[800],
+    color: semantic.textSecondary,
     fontFamily: typography.fontFamily.medium,
-    fontSize: typography.size.micro,
+    fontSize: typography.size.sm,
+  },
+  timeTextSelected: {
+    color: semantic.textInverse,
   },
   seeClassesButton: {
     alignItems: "center",
@@ -1547,12 +1725,107 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     flexDirection: "row",
     gap: spacing[1],
-    height: 34,
+    height: 38,
     justifyContent: "center",
+    marginTop: spacing[2],
+  },
+  seeClassesButtonSelected: {
+    backgroundColor: colors.navy[700],
   },
   seeClassesText: {
     color: colors.navy[700],
     fontFamily: typography.fontFamily.thaiSemibold,
-    fontSize: typography.size.sm,
+    fontSize: typography.size.base,
+  },
+  seeClassesTextSelected: {
+    color: semantic.textInverse,
+  },
+  modalRoot: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalClose: {
+    alignItems: "center",
+    backgroundColor: colors.neutral[700],
+    borderRadius: radius.full,
+    height: 32,
+    justifyContent: "center",
+    position: "absolute",
+    right: spacing[3],
+    top: spacing[5],
+    width: 32,
+    ...shadow.sm,
+  },
+  reserveSheet: {
+    alignSelf: "center",
+    backgroundColor: semantic.liquidGlass,
+    borderColor: semantic.liquidGlassBorder,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    gap: spacing[3],
+    marginBottom: spacing[8],
+    overflow: "hidden",
+    padding: spacing[6],
+    width: "92%",
+    ...shadow.lg,
+  },
+  reserveHandle: {
+    alignSelf: "center",
+    backgroundColor: colors.neutral[600],
+    borderRadius: radius.full,
+    height: 6,
+    marginBottom: spacing[2],
+    width: 78,
+  },
+  reserveCopy: {
+    gap: spacing[1],
+  },
+  reservePriceRow: {
+    alignItems: "flex-end",
+    flexDirection: "row",
+    gap: spacing[3],
+  },
+  reserveCredits: {
+    color: semantic.textPrimary,
+    fontFamily: typography.fontFamily.bold,
+    fontSize: typography.size["3xl"] * 1.45,
+    lineHeight: typography.size["3xl"] * 1.45,
+  },
+  reservePrice: {
+    color: semantic.textPrimary,
+    fontFamily: typography.fontFamily.medium,
+    fontSize: typography.size.xl,
+    lineHeight: typography.size.xl * typography.lineHeight.tight,
+    marginBottom: spacing[2],
+  },
+  reserveMeta: {
+    fontSize: typography.size.md,
+    lineHeight: typography.size.md * typography.lineHeight.snug,
+  },
+  reserveActionRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing[3],
+  },
+  reserveButton: {
+    alignItems: "center",
+    backgroundColor: colors.navy[700],
+    borderRadius: radius.full,
+    flex: 1,
+    height: 58,
+    justifyContent: "center",
+  },
+  reserveButtonText: {
+    color: semantic.textInverse,
+    fontFamily: typography.fontFamily.thai,
+    fontSize: typography.size["2xl"],
+  },
+  reserveAddButton: {
+    alignItems: "center",
+    backgroundColor: colors.navy[700],
+    borderRadius: radius.full,
+    height: 58,
+    justifyContent: "center",
+    width: 58,
   },
 });
